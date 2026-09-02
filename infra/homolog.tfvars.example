@@ -8,6 +8,9 @@ cluster_admin_principal_arn = "arn:aws:iam::123456789012:role/replace-me"
 # O EKS não oferece control plane em us-east-1e.
 excluded_availability_zones = ["us-east-1e"]
 
+# Necessário para runners dinâmicos do GitHub Actions. O acesso ainda exige IAM.
+cluster_public_access_cidrs = ["0.0.0.0/0"]
+
 # Configuração econômica para homologação, com capacidade de expansão.
 node_instance_types = ["t3.small"]
 node_min_size       = 1

@@ -57,6 +57,19 @@ variable "excluded_availability_zones" {
   default     = ["us-east-1e"]
 }
 
+variable "cluster_public_access_cidrs" {
+  description = "Redes autorizadas a alcançar o endpoint público autenticado do EKS."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+
+  validation {
+    condition = alltrue([
+      for cidr in var.cluster_public_access_cidrs : can(cidrnetmask(cidr))
+    ])
+    error_message = "Todos os valores devem ser blocos CIDR válidos."
+  }
+}
+
 variable "node_instance_types" {
   description = "Tipos de instância permitidos no Managed Node Group."
   type        = list(string)
