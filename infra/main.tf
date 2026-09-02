@@ -1,5 +1,15 @@
 locals {
   name = "mecanica-${var.environment}"
+
+  eks_subnet_ids = sort([
+    for subnet in data.aws_subnet.default : subnet.id
+    if !contains(var.excluded_availability_zones, subnet.availability_zone)
+  ])
+
+  eks_availability_zones = toset([
+    for subnet in data.aws_subnet.default : subnet.availability_zone
+    if !contains(var.excluded_availability_zones, subnet.availability_zone)
+  ])
 }
 
 data "aws_vpc" "default" {
@@ -11,6 +21,11 @@ data "aws_subnets" "default" {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
+}
+
+data "aws_subnet" "default" {
+  for_each = toset(data.aws_subnets.default.ids)
+  id       = each.value
 }
 
 resource "aws_eks_cluster" "this" {
@@ -26,7 +41,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   vpc_config {
-    subnet_ids = sort(data.aws_subnets.default.ids)
+    subnet_ids = local.eks_subnet_ids
 
     endpoint_private_access = true
     endpoint_public_access  = false
@@ -34,8 +49,8 @@ resource "aws_eks_cluster" "this" {
 
   lifecycle {
     precondition {
-      condition     = length(data.aws_subnets.default.ids) >= 2
-      error_message = "O EKS exige subnets em ao menos duas zonas de disponibilidade."
+      condition     = length(local.eks_availability_zones) >= 2
+      error_message = "O EKS exige subnets suportadas em ao menos duas zonas de disponibilidade."
     }
   }
 }
@@ -60,7 +75,7 @@ resource "aws_eks_node_group" "application" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${local.name}-application"
   node_role_arn   = var.node_role_arn
-  subnet_ids      = sort(data.aws_subnets.default.ids)
+  subnet_ids      = local.eks_subnet_ids
 
   capacity_type  = "ON_DEMAND"
   instance_types = var.node_instance_types

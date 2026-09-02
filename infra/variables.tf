@@ -51,6 +51,12 @@ variable "kubernetes_version" {
   nullable    = true
 }
 
+variable "excluded_availability_zones" {
+  description = "Zonas da região que não oferecem suporte ao control plane do EKS."
+  type        = set(string)
+  default     = ["us-east-1e"]
+}
+
 variable "node_instance_types" {
   description = "Tipos de instância permitidos no Managed Node Group."
   type        = list(string)
