@@ -5,6 +5,9 @@ cluster_role_arn            = "arn:aws:iam::123456789012:role/replace-me"
 node_role_arn               = "arn:aws:iam::123456789012:role/replace-me"
 cluster_admin_principal_arn = "arn:aws:iam::123456789012:role/replace-me"
 
+# O EKS não oferece control plane em us-east-1e.
+excluded_availability_zones = ["us-east-1e"]
+
 # Configuração econômica para homologação, com capacidade de expansão.
 node_instance_types = ["t3.small"]
 node_min_size       = 1
