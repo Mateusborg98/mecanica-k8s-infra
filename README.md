@@ -17,9 +17,14 @@ variáveis.
 
 ## Segurança de acesso
 
-O endpoint Kubernetes nasce privado e o acesso administrativo é concedido
-somente à role informada. O acesso necessário ao deploy externo será tratado
-separadamente, sem deixar o endpoint aberto por padrão.
+O cluster mantém o endpoint privado para comunicação dentro da VPC e também
+expõe o endpoint público para permitir o deploy por runners hospedados do
+GitHub Actions. Conhecer o endpoint não concede acesso ao cluster: as chamadas
+continuam protegidas por autenticação AWS IAM e autorização do Kubernetes.
+
+No Learner Lab, os IPs dos runners são dinâmicos e o CIDR público é configurado
+como `0.0.0.0/0`. Em um ambiente corporativo, a preferência seria utilizar um
+runner privado dentro da VPC ou restringir os blocos de rede autorizados.
 
 ## Escalabilidade
 
