@@ -77,6 +77,26 @@ jobs:
           --region "${AWS_REGION}"
           --name "mecanica-${DEPLOYMENT_ENVIRONMENT}"
 
+      - name: Install Kubernetes Metrics Server
+        working-directory: .
+        run: |
+          helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+          helm repo update
+          helm upgrade --install metrics-server metrics-server/metrics-server \
+            --namespace kube-system \
+            --set replicas=1 \
+            --set resources.requests.cpu=25m \
+            --set resources.requests.memory=64Mi \
+            --set resources.limits.cpu=100m \
+            --set resources.limits.memory=128Mi \
+            --wait \
+            --timeout 5m
+
+          kubectl wait --for=condition=Available \
+            deployment/metrics-server \
+            --namespace kube-system \
+            --timeout=180s
+
       - name: Configure Datadog repository
         working-directory: .
         run: |
