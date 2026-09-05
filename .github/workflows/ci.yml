@@ -39,3 +39,15 @@ jobs:
 
       - name: Validate Terraform configuration
         run: terraform validate -no-color
+
+      - name: Validate Datadog Helm configuration
+        working-directory: .
+        run: |
+          helm repo add datadog https://helm.datadoghq.com
+          helm repo update
+          helm template datadog-agent datadog/datadog \
+            --namespace datadog \
+            --values observability/datadog-values.yaml \
+            --set-string datadog.clusterName=mecanica-ci \
+            --set-string datadog.apiKey=dummy-validation-key \
+            > /dev/null

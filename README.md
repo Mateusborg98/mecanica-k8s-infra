@@ -10,6 +10,7 @@ principal do Tech Challenge.
 - uso da VPC e das subnets padrão do Learner Lab;
 - estado remoto do Terraform no S3;
 - acesso administrativo associado a uma role preexistente.
+- Datadog Agent instalado por Helm para métricas e logs do Kubernetes.
 
 As roles IAM não são criadas pelo Terraform. O AWS Academy restringe a criação
 de IAM, por isso os ARNs das roles fornecidas pelo laboratório são recebidos por
@@ -36,4 +37,28 @@ Pod Autoscaler no repositório da aplicação.
 
 O EKS e as instâncias EC2 geram custo enquanto existem. O ambiente deve ser
 criado apenas durante validações e destruído ao final da sessão de trabalho.
+
+## Observabilidade com Datadog
+
+O workflow de deploy instala o Datadog Agent no namespace `datadog` depois da
+criação do EKS. A configuração versionada está em
+`observability/datadog-values.yaml` e habilita:
+
+- métricas de CPU, memória, pods, deployments e nós;
+- coleta seletiva dos logs da aplicação por autodiscovery;
+- coleta OpenMetrics do endpoint Prometheus da aplicação;
+- tags `project:mecanica` e `env:homolog|prod`.
+
+Crie o secret `DATADOG_API_KEY` nos environments `homolog` e `production`.
+Nenhuma chave é armazenada no repositório. Para o site
+`https://app.datadoghq.com`, o valor de `datadog.site` deve permanecer como
+`datadoghq.com`.
+
+Após o deploy, valide a instalação com:
+
+```bash
+kubectl get pods -n datadog
+kubectl get daemonset -n datadog
+helm status datadog-agent -n datadog
+```
 Infraestrutura Kubernetes da aplicação provisionada com Terraform

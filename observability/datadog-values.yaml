@@ -1,0 +1,44 @@
+datadog:
+  site: datadoghq.com
+  apiKeyExistingSecret: datadog-secret
+  logs:
+    enabled: true
+    containerCollectAll: false
+  processAgent:
+    enabled: false
+  networkMonitoring:
+    enabled: false
+  prometheusScrape:
+    enabled: true
+    serviceEndpoints: true
+  collectEvents: false
+  kubeStateMetricsEnabled: false
+  kubeStateMetricsCore:
+    enabled: true
+    collectSecretMetrics: false
+    collectConfigMaps: false
+  tags:
+    - project:mecanica
+    - managed-by:github-actions
+
+clusterAgent:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+agents:
+  containers:
+    agent:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
