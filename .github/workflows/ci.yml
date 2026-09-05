@@ -53,8 +53,13 @@ jobs:
       - name: Validate Datadog Helm configuration
         working-directory: .
         run: |
+          helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
           helm repo add datadog https://helm.datadoghq.com
           helm repo update
+          helm template metrics-server metrics-server/metrics-server \
+            --namespace kube-system \
+            --set replicas=1 \
+            > /dev/null
           helm template datadog-agent datadog/datadog \
             --namespace datadog \
             --values observability/datadog-values.yaml \

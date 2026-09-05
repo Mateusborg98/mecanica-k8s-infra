@@ -7,6 +7,7 @@ principal do Tech Challenge.
 
 - Amazon EKS;
 - Managed Node Group escalável;
+- Metrics Server para fornecer CPU e memória ao HPA;
 - uso da VPC e das subnets padrão do Learner Lab;
 - estado remoto do Terraform no S3;
 - acesso administrativo associado a uma role preexistente.
@@ -37,6 +38,10 @@ Pod Autoscaler no repositório da aplicação.
 
 O EKS e as instâncias EC2 geram custo enquanto existem. O ambiente deve ser
 criado apenas durante validações e destruído ao final da sessão de trabalho.
+
+O workflow instala o Metrics Server pelo chart oficial do projeto Kubernetes.
+Sem ele, o HPA existe, mas mostra CPU e memória como `<unknown>` e não consegue
+decidir quando aumentar ou reduzir as réplicas.
 
 ## Observabilidade com Datadog
 
