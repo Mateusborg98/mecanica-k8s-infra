@@ -49,10 +49,17 @@ criação do EKS. A configuração versionada está em
 - coleta OpenMetrics do endpoint Prometheus da aplicação;
 - tags `project:mecanica` e `env:homolog|prod`.
 
-Crie o secret `DATADOG_API_KEY` nos environments `homolog` e `production`.
+Crie os secrets `DATADOG_API_KEY` e `DATADOG_APP_KEY` nos environments
+`homolog` e `production`.
 Nenhuma chave é armazenada no repositório. Para o site
 `https://app.datadoghq.com`, o valor de `datadog.site` deve permanecer como
 `datadoghq.com`.
+
+O diretório `observability/terraform` mantém, em um estado remoto separado, o
+dashboard e os alertas de indisponibilidade, falha no processamento de ordens,
+latência e CPU. O dashboard apresenta volume diário de ordens, tempo médio por
+status, latência das APIs, recursos do Kubernetes e erros das integrações.
+CPF/CNPJ, JWT, senhas e chaves não são enviados como logs ou métricas.
 
 Após o deploy, valide a instalação com:
 

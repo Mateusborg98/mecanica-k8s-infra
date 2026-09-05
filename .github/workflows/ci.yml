@@ -40,6 +40,16 @@ jobs:
       - name: Validate Terraform configuration
         run: terraform validate -no-color
 
+      - name: Check Datadog Terraform formatting
+        working-directory: observability/terraform
+        run: terraform fmt -check
+
+      - name: Validate Datadog Terraform configuration
+        working-directory: observability/terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate -no-color
+
       - name: Validate Datadog Helm configuration
         working-directory: .
         run: |

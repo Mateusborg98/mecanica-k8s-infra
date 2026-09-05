@@ -33,6 +33,7 @@ jobs:
       TF_VAR_node_role_arn: ${{ secrets.EKS_NODE_ROLE_ARN }}
       TF_VAR_cluster_admin_principal_arn: ${{ secrets.EKS_ADMIN_PRINCIPAL_ARN }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
 
     steps:
       - name: Checkout repository
@@ -101,3 +102,21 @@ jobs:
             --set-string "datadog.tags[2]=env:${DEPLOYMENT_ENVIRONMENT}" \
             --wait \
             --timeout 10m
+
+      - name: Initialize Datadog Terraform state
+        working-directory: observability/terraform
+        run: >-
+          terraform init
+          -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+          -backend-config="key=mecanica-observability/${{ github.ref_name }}/terraform.tfstate"
+          -backend-config="region=${AWS_REGION}"
+          -input=false
+
+      - name: Apply Datadog dashboard and monitors
+        working-directory: observability/terraform
+        run: |
+          terraform plan \
+            -var="environment=${DEPLOYMENT_ENVIRONMENT}" \
+            -out=datadog.tfplan \
+            -input=false
+          terraform apply -auto-approve -input=false datadog.tfplan
