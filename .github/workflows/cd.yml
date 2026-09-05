@@ -32,6 +32,8 @@ jobs:
       TF_VAR_cluster_role_arn: ${{ secrets.EKS_CLUSTER_ROLE_ARN }}
       TF_VAR_node_role_arn: ${{ secrets.EKS_NODE_ROLE_ARN }}
       TF_VAR_cluster_admin_principal_arn: ${{ secrets.EKS_ADMIN_PRINCIPAL_ARN }}
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
 
     steps:
       - name: Checkout repository
@@ -67,3 +69,54 @@ jobs:
 
       - name: Apply Terraform plan
         run: terraform apply -auto-approve -input=false tfplan
+
+      - name: Configure Kubernetes access
+        working-directory: .
+        run: >-
+          aws eks update-kubeconfig
+          --region "${AWS_REGION}"
+          --name "mecanica-${DEPLOYMENT_ENVIRONMENT}"
+
+      - name: Configure Datadog repository
+        working-directory: .
+        run: |
+          helm repo add datadog https://helm.datadoghq.com
+          helm repo update
+
+      - name: Create Datadog credentials
+        working-directory: .
+        run: |
+          kubectl create namespace datadog --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic datadog-secret \
+            --namespace datadog \
+            --from-literal api-key="${DATADOG_API_KEY}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Install Datadog Agent
+        working-directory: .
+        run: |
+          helm upgrade --install datadog-agent datadog/datadog \
+            --namespace datadog \
+            --values observability/datadog-values.yaml \
+            --set-string datadog.clusterName="mecanica-${DEPLOYMENT_ENVIRONMENT}" \
+            --set-string "datadog.tags[2]=env:${DEPLOYMENT_ENVIRONMENT}" \
+            --wait \
+            --timeout 10m
+
+      - name: Initialize Datadog Terraform state
+        working-directory: observability/terraform
+        run: >-
+          terraform init
+          -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+          -backend-config="key=mecanica-observability/${{ github.ref_name }}/terraform.tfstate"
+          -backend-config="region=${AWS_REGION}"
+          -input=false
+
+      - name: Apply Datadog dashboard and monitors
+        working-directory: observability/terraform
+        run: |
+          terraform plan \
+            -var="environment=${DEPLOYMENT_ENVIRONMENT}" \
+            -out=datadog.tfplan \
+            -input=false
+          terraform apply -auto-approve -input=false datadog.tfplan

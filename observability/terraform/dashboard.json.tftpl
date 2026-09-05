@@ -1,0 +1,45 @@
+{
+  "title": "Mecânica - ${environment}",
+  "description": "Dashboard operacional da oficina mecânica provisionado com Terraform.",
+  "layout_type": "ordered",
+  "is_read_only": false,
+  "notify_list": [],
+  "template_variables": [],
+  "widgets": [
+    {
+      "definition": {
+        "type": "query_value", "title": "Ordens criadas nas últimas 24 horas", "autoscale": true, "precision": 0,
+        "requests": [{"response_format": "scalar", "queries": [{"name": "q", "data_source": "metrics", "query": "sum:mecanica.ordens_servico.criadas{env:${environment}}.as_count()", "aggregator": "sum"}], "formulas": [{"formula": "q"}]}]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries", "title": "Tempo médio por status", "show_legend": true,
+        "requests": [{"response_format": "timeseries", "queries": [{"name": "duration_sum", "data_source": "metrics", "query": "sum:mecanica.ordens_servico.status.duracao.sum{env:${environment}} by {etapa}"}, {"name": "duration_count", "data_source": "metrics", "query": "sum:mecanica.ordens_servico.status.duracao.count{env:${environment}} by {etapa}"}], "formulas": [{"formula": "duration_sum / duration_count", "alias": "Duração média"}], "display_type": "line"}]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries", "title": "Latência média das APIs", "show_legend": true,
+        "requests": [{"response_format": "timeseries", "queries": [{"name": "latency_sum", "data_source": "metrics", "query": "sum:mecanica.api.http.requests.duration.sum{env:${environment}} by {uri}"}, {"name": "latency_count", "data_source": "metrics", "query": "sum:mecanica.api.http.requests.duration.count{env:${environment}} by {uri}"}], "formulas": [{"formula": "latency_sum / latency_count", "alias": "Latência média"}], "display_type": "line"}]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries", "title": "Recursos do Kubernetes", "show_legend": true,
+        "requests": [{"response_format": "timeseries", "queries": [{"name": "cpu", "data_source": "metrics", "query": "avg:kubernetes.cpu.usage.total{env:${environment},kube_namespace:mecanica} by {pod_name}"}], "formulas": [{"formula": "cpu", "alias": "CPU"}], "display_type": "line"}, {"response_format": "timeseries", "queries": [{"name": "memory", "data_source": "metrics", "query": "avg:kubernetes.memory.usage{env:${environment},kube_namespace:mecanica} by {pod_name}"}], "formulas": [{"formula": "memory", "alias": "Memória"}], "display_type": "line"}]
+      }
+    },
+    {
+      "definition": {
+        "type": "query_value", "title": "Falhas no processamento", "autoscale": true, "precision": 0,
+        "requests": [{"response_format": "scalar", "queries": [{"name": "failures", "data_source": "metrics", "query": "sum:mecanica.ordens_servico.processamento.falhas{env:${environment}}.as_count()", "aggregator": "sum"}], "formulas": [{"formula": "failures"}], "conditional_formats": [{"comparator": ">", "value": 0, "palette": "white_on_red"}]}]
+      }
+    },
+    {
+      "definition": {
+        "type": "log_stream", "title": "Erros e falhas nas integrações", "query": "env:${environment} service:mecanica-api status:error", "columns": ["host", "service", "correlationId", "message"], "message_display": "inline", "show_date_column": true, "show_message_column": true, "sort": {"column": "timestamp", "order": "desc"}
+      }
+    }
+  ]
+}
