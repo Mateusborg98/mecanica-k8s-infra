@@ -1,0 +1,68 @@
+name: Kubernetes Infrastructure CI
+
+on:
+  pull_request:
+    branches:
+      - homolog
+      - main
+  push:
+    branches:
+      - "feature/**"
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-validation:
+    name: Terraform validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: infra
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize Terraform without backend
+        run: terraform init -backend=false -input=false
+
+      - name: Validate Terraform configuration
+        run: terraform validate -no-color
+
+      - name: Check Datadog Terraform formatting
+        working-directory: observability/terraform
+        run: terraform fmt -check
+
+      - name: Validate Datadog Terraform configuration
+        working-directory: observability/terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate -no-color
+
+      - name: Validate Datadog Helm configuration
+        working-directory: .
+        run: |
+          helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+          helm repo add datadog https://helm.datadoghq.com
+          helm repo update
+          helm template metrics-server metrics-server/metrics-server \
+            --namespace kube-system \
+            --set replicas=1 \
+            > /dev/null
+          helm template datadog-agent datadog/datadog \
+            --namespace datadog \
+            --values observability/datadog-values.yaml \
+            --set-string datadog.clusterName=mecanica-ci \
+            --set-string datadog.apiKey=dummy-validation-key \
+            > /dev/null
