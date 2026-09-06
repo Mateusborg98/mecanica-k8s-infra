@@ -94,6 +94,14 @@ terraform -chdir=observability/terraform validate
 O CI também renderiza o Helm Chart do Datadog com uma chave fictícia. Isso
 valida a estrutura do arquivo sem enviar dados nem criar recursos.
 
+## Evidência validada em homologação
+
+Na validação de 6 de setembro de 2026, o cluster apresentou Node Group ativo,
+pod da API pronto e HPA recebendo CPU e memória pelo Metrics Server. Um ciclo
+completo de ordem percorreu diagnóstico, aprovação, execução, finalização e
+entrega. As métricas de duração e os logs JSON foram coletados usando o mesmo
+`correlationId`. Dados sensíveis e o JWT não foram registrados na evidência.
+
 ## CI/CD e configuração do GitHub
 
 ```text
