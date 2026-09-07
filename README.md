@@ -30,9 +30,10 @@ runner privado dentro da VPC ou restringir os blocos de rede autorizados.
 
 ## Escalabilidade
 
-Em homologação, o Node Group começa com um nó `t3.small` e permite expansão até
-dois nós. A quantidade de pods será controlada posteriormente pelo Horizontal
-Pod Autoscaler no repositório da aplicação.
+O Node Group começa com um nó `t3.small` e permite expansão até dois nós. A
+aplicação possui um Horizontal Pod Autoscaler configurado no repositório
+`mecanica-api`, com mínimo de um e máximo de três pods, usando CPU e memória
+fornecidas pelo Metrics Server.
 
 ## Custo no Learner Lab
 
