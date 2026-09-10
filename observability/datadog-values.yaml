@@ -4,6 +4,9 @@ datadog:
   logs:
     enabled: true
     containerCollectAll: false
+  apm:
+    socketEnabled: true
+    portEnabled: false
   processAgent:
     enabled: false
   networkMonitoring:
@@ -24,6 +27,10 @@ datadog:
 clusterAgent:
   enabled: true
   replicas: 1
+  admissionController:
+    enabled: true
+    mutateUnlabelled: false
+    configMode: socket
   resources:
     requests:
       cpu: 50m
