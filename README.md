@@ -52,6 +52,7 @@ criação do EKS. A configuração versionada está em
 
 - métricas de CPU, memória, pods, deployments e nós;
 - coleta seletiva dos logs da aplicação por autodiscovery;
+- coleta de traces APM da aplicação Java por injeção automática;
 - coleta OpenMetrics do endpoint Prometheus da aplicação;
 - tags `project:mecanica` e `env:homolog|prod`.
 
@@ -73,7 +74,14 @@ Após o deploy, valide a instalação com:
 kubectl get pods -n datadog
 kubectl get daemonset -n datadog
 helm status datadog-agent -n datadog
+kubectl get mutatingwebhookconfiguration datadog-webhook
 ```
+
+O Admission Controller injeta o tracer Java somente nos pods identificados
+com `admission.datadoghq.com/enabled: "true"`. A comunicação com o Trace Agent
+usa o socket Unix montado automaticamente no pod, sem expor a porta 8126.
+Após gerar tráfego, consulte `APM > Traces` no Datadog usando
+`service:mecanica-api env:homolog|prod`.
 
 No Datadog, confirme o cluster `mecanica-homolog`, abra o dashboard
 `Mecânica - homolog` e verifique os monitores criados pelo Terraform. Métricas
