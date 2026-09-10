@@ -3,6 +3,35 @@
 Este repositório provisiona o cluster Amazon EKS utilizado pela aplicação
 principal do Tech Challenge.
 
+## Tecnologias
+
+Terraform 1.15, AWS Provider 6, Amazon EKS, Managed Node Groups, Kubernetes,
+Helm, Metrics Server, Datadog Agent, Datadog APM, Amazon S3 e GitHub Actions.
+
+## Arquitetura específica
+
+```mermaid
+flowchart TB
+    GitHub[GitHub Actions] -->|Terraform| EKS[Amazon EKS]
+    GitHub -->|Helm| Metrics[Metrics Server]
+    GitHub -->|Helm| DD[Datadog Agent]
+    S3[(S3 Terraform State)] <--> GitHub
+    Roles[Roles IAM do Learner Lab] --> EKS
+
+    subgraph Cluster[Cluster mecanica-homolog ou mecanica-prod]
+        Node[Managed Node Group t3.small]
+        API[Pods mecanica-api]
+        HPA[Horizontal Pod Autoscaler]
+        Metrics --> HPA
+        HPA --> API
+        DD -->|métricas, logs e traces| API
+        Node --> API
+    end
+
+    LB[Load Balancer] --> API
+    DD --> SaaS[Datadog SaaS]
+```
+
 ## Recursos
 
 - Amazon EKS;
@@ -102,6 +131,35 @@ terraform -chdir=observability/terraform validate
 
 O CI também renderiza o Helm Chart do Datadog com uma chave fictícia. Isso
 valida a estrutura do arquivo sem enviar dados nem criar recursos.
+
+## Deploy
+
+O caminho oficial é automático: um push resultante de Pull Request em
+`homolog` ou `main` executa o workflow `Deploy Kubernetes Infrastructure`. O
+workflow inicializa o state S3 do ambiente, gera e aplica o plano, configura o
+acesso ao cluster e instala Metrics Server, Datadog Agent, dashboard e alertas.
+
+Para validar manualmente sem criar recursos:
+
+```powershell
+terraform -chdir=infra init -backend=false
+terraform -chdir=infra plan `
+  -var="environment=homolog" `
+  -var="cluster_role_arn=<arn-cluster>" `
+  -var="node_role_arn=<arn-node>" `
+  -var="cluster_admin_principal_arn=<arn-admin>"
+```
+
+O `apply` deve utilizar o mesmo bucket e a mesma chave de state configurados no
+GitHub Environment. Não mantenha arquivos de state ou credenciais no Git.
+
+## Swagger e documentação central
+
+O cluster não oferece uma API de negócio própria; ele hospeda a aplicação:
+
+- [Swagger pelo API Gateway](https://3o3iqeu0b9.execute-api.us-east-1.amazonaws.com/swagger-ui/index.html)
+- [Coleção Postman](https://github.com/Mateusborg98/mecanica-api/blob/main/docs/postman/mecanica-fase3.postman_collection.json)
+- [Arquitetura completa da solução](https://github.com/Mateusborg98/mecanica-api/blob/main/docs/architecture.md)
 
 ## Evidência validada em homologação
 
